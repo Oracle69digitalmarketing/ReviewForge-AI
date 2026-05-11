@@ -1,5 +1,6 @@
 import express from 'express';
 import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
+import Groq from 'groq-sdk';
 import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
@@ -16,21 +17,41 @@ async function startServer() {
   app.use(express.json());
 
   const PORT = 3000;
-  const apiKey = process.env.GEMINI_API_KEY;
+  const geminiApiKey = process.env.GEMINI_API_KEY;
+  const groqApiKey = process.env.GROQ_API_KEY;
 
-  const isPlaceholder = !apiKey || apiKey === 'MY_GEMINI_API_KEY' || apiKey.includes('YOUR_KEY');
-  if (isPlaceholder) {
-    console.error('CRITICAL: GEMINI_API_KEY is missing or invalid (placeholder detected).');
-  }
+  const isGeminiValid = geminiApiKey && geminiApiKey !== 'MY_GEMINI_API_KEY' && !geminiApiKey.includes('YOUR_KEY');
+  const isGroqValid = groqApiKey && groqApiKey !== 'MY_GROQ_API_KEY' && !groqApiKey.includes('YOUR_KEY');
 
-  const genAI = new GoogleGenerativeAI(apiKey && !isPlaceholder ? apiKey : '');
+  const genAI = isGeminiValid ? new GoogleGenerativeAI(geminiApiKey!) : null;
+  const groq = isGroqValid ? new Groq({ apiKey: groqApiKey }) : null;
 
-  // Helper to check if AI is configured
+  // Helper to check if any AI is configured
   const checkAI = () => {
-    if (isPlaceholder) {
-      throw new Error('Gemini API Key is not configured. Please set GEMINI_API_KEY in your environment/settings.');
+    if (!isGeminiValid && !isGroqValid) {
+      throw new Error('No valid LLM API key found. Please set GEMINI_API_KEY or GROQ_API_KEY in your environment/settings.');
     }
   };
+
+  // Unified LLM Helper for flexible tasks
+  async function getLLMResponse(prompt: string, isJson: boolean = false) {
+    if (isGroqValid && groq) {
+      const completion = await groq.chat.completions.create({
+        messages: [{ role: 'user', content: prompt }],
+        model: 'llama-3.1-8b-instant',
+        response_format: isJson ? { type: 'json_object' } : undefined,
+      });
+      return completion.choices[0]?.message?.content || '';
+    } else if (isGeminiValid && genAI) {
+      const model = genAI.getGenerativeModel({ 
+        model: 'gemini-1.5-flash',
+        generationConfig: isJson ? { responseMimeType: 'application/json' } : undefined
+      });
+      const result = await model.generateContent(prompt);
+      return result.response.text();
+    }
+    throw new Error('LLM configuration error');
+  }
 
   // Mock Database across domains (Yelp, Amazon, Goodreads)
   const MOCK_ITEMS = [
@@ -76,10 +97,6 @@ async function startServer() {
     try {
       checkAI();
       const { user_name, item_id, history } = req.body;
-      const model = genAI.getGenerativeModel({ 
-        model: 'gemini-1.5-flash',
-        generationConfig: { responseMimeType: 'application/json', responseSchema: PERSONA_SCHEMA }
-      });
 
       // 1. Extraction step
       const extractionPrompt = `
@@ -87,9 +104,9 @@ async function startServer() {
         Analyze this user history: ${JSON.stringify(history)}. 
         Capture rating tendencies, linguistic style (including pidgin usage), sentiment patterns, and contextual triggers.
         Focus on Nigerian nuances.
+        Output exactly in this JSON format: ${JSON.stringify(PERSONA_SCHEMA)}
       `;
-      const personaResult = await model.generateContent(extractionPrompt);
-      const personaText = personaResult.response.text();
+      const personaText = await getLLMResponse(extractionPrompt, true);
       let persona;
       try {
         const jsonMatch = personaText.match(/\{.*\}/s);
@@ -101,7 +118,6 @@ async function startServer() {
 
       // 2. Generation step with Chain-of-Thought
       const item = MOCK_ITEMS.find(i => i.id === item_id) || MOCK_ITEMS[0];
-      const genModel = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
       
       const genPrompt = `
         User Identity: ${user_name}
@@ -116,8 +132,7 @@ async function startServer() {
         Format: JSON { "internal_cot": "...", "rating": number, "review_text": "string", "fidelity_score": number }
       `;
       
-      const finalResult = await genModel.generateContent(genPrompt);
-      const text = finalResult.response.text();
+      const text = await getLLMResponse(genPrompt, true);
       const jsonMatch = text.match(/\{.*\}/s);
       if (jsonMatch) {
          res.json(JSON.parse(jsonMatch[0]));
@@ -134,7 +149,6 @@ async function startServer() {
     try {
       checkAI();
       const { query, history, conversation_state } = req.body;
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
       
       const extractionPrompt = `
         User History: ${JSON.stringify(history)}
@@ -156,8 +170,7 @@ async function startServer() {
         }
       `;
 
-      const result = await model.generateContent(extractionPrompt);
-      const text = result.response.text();
+      const text = await getLLMResponse(extractionPrompt, true);
       const jsonMatch = text.match(/\{.*\}/s);
       let data = { ranked_items: [], updated_state: "", reasoning: "" };
       
@@ -195,12 +208,7 @@ async function startServer() {
     try {
       checkAI();
       const { history } = req.body;
-      const model = genAI.getGenerativeModel({ 
-        model: 'gemini-1.5-flash',
-        generationConfig: { responseMimeType: 'application/json', responseSchema: PERSONA_SCHEMA }
-      });
-      const result = await model.generateContent(`Extract persona from: ${JSON.stringify(history)}`);
-      const text = result.response.text();
+      const text = await getLLMResponse(`Extract persona and output ONLY JSON: ${JSON.stringify(history)}. Format: ${JSON.stringify(PERSONA_SCHEMA)}`, true);
       const jsonMatch = text.match(/\{.*\}/s);
       if (jsonMatch) {
         res.json(JSON.parse(jsonMatch[0]));
@@ -216,7 +224,7 @@ async function startServer() {
   const distPath = path.resolve(__dirname, 'dist');
   const indexHtmlExists = fs.existsSync(path.join(distPath, 'index.html'));
 
-  if (process.env.NODE_ENV === 'production' || indexHtmlExists) {
+  if (process.env.NODE_ENV === 'production' && indexHtmlExists) {
     console.log('Starting in PRODUCTION mode, serving from:', distPath);
     app.use(express.static(distPath));
     app.get('*', (req, res, next) => {
@@ -227,6 +235,12 @@ async function startServer() {
       res.sendFile(path.join(distPath, 'index.html'));
     });
   } else {
+    // If we're in production but dist is missing, log a warning and fallback to dev if possible,
+    // though in a real production environment this should probably be an error.
+    // In AI Studio, we want to favor the Vite middleware during development.
+    if (process.env.NODE_ENV === 'production' && !indexHtmlExists) {
+      console.warn('NODE_ENV is production but dist/index.html was not found. Falling back to Vite middleware.');
+    }
     console.log('Starting in DEVELOPMENT mode with Vite Middleware');
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
