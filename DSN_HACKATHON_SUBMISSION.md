@@ -56,6 +56,7 @@ The project is built for complete portability.
 - **Local Sovereignty:** While currently optimized for Gemini 1.5 for high-fidelity reasoning, the architecture is designed to support local Llama-3-8B endpoints with the same persona schema.
 
 **Docker Hub Image:** [sophiemabel69/reviewforge-ai:latest](https://hub.docker.com/r/sophiemabel69/reviewforge-ai)
+
 **Repository Access:** [https://github.com/aistudio-build/reviewforge-ai](https://github.com/aistudio-build/reviewforge-ai)
 
 ---
