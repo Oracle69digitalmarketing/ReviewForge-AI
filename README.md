@@ -7,6 +7,7 @@ ReviewForge AI is a dual-task LLM agent that simulates Nigerian reviewer behavio
 **Solution Paper:** [DSN_HACKATHON_SUBMISSION.md]
 
 **Live Application URL:** [https://ais-pre-4kbvltwdtvkp6iqfzkw2de-94089556651.europe-west1.run.app](https://ais-pre-4kbvltwdtvkp6iqfzkw2de-94089556651.europe-west1.run.app)
+
 **Docker Hub (Unified Image):** [sophiemabel69/reviewforge-ai:latest](https://hub.docker.com/r/sophiemabel69/reviewforge-ai)
 
 ## Quick Start (for Judges)
