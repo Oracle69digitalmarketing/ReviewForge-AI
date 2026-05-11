@@ -1,0 +1,6 @@
+{
+  "name": "ReviewForge AI",
+  "description": "A Nigerian-contextualized AI agent that models reviewer personas to simulate authentic feedback and provide personalized recommendations in the user's voice.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["User Modeling", "Linguistic Analysis"]
+}
