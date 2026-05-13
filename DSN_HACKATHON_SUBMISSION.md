@@ -57,7 +57,7 @@ The project is built for complete portability.
 
 **Docker Hub Image:** [sophiemabel/reviewforge-ai:latest](https://hub.docker.com/r/sophiemabel/reviewforge-ai)
 
-**Repository Access:** [https://github.com/aistudio-build/reviewforge-ai](https://github.com/aistudio-build/reviewforge-ai)
+**Repository Access:** [https://github.com/Oracle69digitalmarketing/ReviewForge-AI](https://github.com/Oracle69digitalmarketing/ReviewForge-AI)
 
 ---
 
