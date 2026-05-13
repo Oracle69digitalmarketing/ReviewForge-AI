@@ -11,7 +11,7 @@
 ### 1. Introduction & Architecture Overview
 ReviewForge AI is a dual-task agent built around a single **Persona Engine**. We reject the notion that review generation and recommendation are separate problems. A review is a window into preference; a recommendation is a predicted review before it is written. The Persona Engine bridges them, capturing not only rating behaviour but also linguistic style, including Nigerian English and Pidgin—a requirement explicitly rewarded by the judges.
 
-**Live Application URL:** [https://ais-pre-4kbvltwdtvkp6iqfzkw2de-94089556651.europe-west1.run.app](https://ais-pre-4kbvltwdtvkp6iqfzkw2de-94089556651.europe-west1.run.app)
+**Live Application URL:** [https://reviewforge-ai.onrender.com](https://reviewforge-ai.onrender.com)
 
 #### Key Design Choices
 - **Structured Persona Engine:** Uses Gemini 1.5 Flash to distill raw text into a multi-dimensional persona schema.
@@ -55,7 +55,7 @@ The project is built for complete portability.
 - **Evaluation Loop:** The system includes internal telemetry to log "Chain-of-Thought" paths, allowing judges to inspect the model's logic for every decision.
 - **Local Sovereignty:** While currently optimized for Gemini 1.5 for high-fidelity reasoning, the architecture is designed to support local Llama-3-8B endpoints with the same persona schema.
 
-**Docker Hub Image:** [sophiemabel69/reviewforge-ai:latest](https://hub.docker.com/r/sophiemabel69/reviewforge-ai)
+**Docker Hub Image:** [sophiemabel/reviewforge-ai:latest](https://hub.docker.com/r/sophiemabel/reviewforge-ai)
 
 **Repository Access:** [https://github.com/aistudio-build/reviewforge-ai](https://github.com/aistudio-build/reviewforge-ai)
 

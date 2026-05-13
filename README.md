@@ -6,19 +6,19 @@
 ReviewForge AI is a dual-task LLM agent that simulates Nigerian reviewer behaviour (ratings + text) and delivers personalised, explainable recommendations. It utilizes the **Gemini 1.5 Flash** model to achieve high-reasoning fidelity with low latency, specifically optimized for Nigerian contextual nuances.
 **Solution Paper:** [DSN_HACKATHON_SUBMISSION.md]
 
-**Live Application URL:** [https://ais-pre-4kbvltwdtvkp6iqfzkw2de-94089556651.europe-west1.run.app](https://ais-pre-4kbvltwdtvkp6iqfzkw2de-94089556651.europe-west1.run.app)
+**Live Application URL:** [https://reviewforge-ai.onrender.com](https://reviewforge-ai.onrender.com)
 
-**Docker Hub (Unified Image):** [sophiemabel69/reviewforge-ai:latest](https://hub.docker.com/r/sophiemabel69/reviewforge-ai)
+**Docker Hub (Unified Image):** [sophiemabel/reviewforge-ai:latest](https://hub.docker.com/r/sophiemabel/reviewforge-ai)
 
 ## Quick Start (for Judges)
 ### 1. Pull the Image
 ```bash
-docker pull sophiemabel69/reviewforge-ai:latest
+docker pull sophiemabel/reviewforge-ai:latest
 ```
 
 ### 2. Run the Container
 ```bash
-docker run -d -p 3000:3000 -e GEMINI_API_KEY=your_key_here sophiemabel69/reviewforge-ai:latest
+docker run -d -p 3000:3000 -e GEMINI_API_KEY=your_key_here sophiemabel/reviewforge-ai:latest
 ```
 *The agent requires a Gemini API key for real-time persona extraction and reasoning. The app is accessible at http://localhost:3000.*
 
