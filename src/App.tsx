@@ -45,6 +45,7 @@ export default function App() {
   const [persona, setPersona] = useState<any>(null);
   const [personaOptions, setPersonaOptions] = useState<any[] | null>(null);
   const [isExtracting, setIsExtracting] = useState(false);
+  const [selectedSample, setSelectedSample] = useState<'yelp' | 'amazon' | 'goodreads' | null>(null);
 
   const loadSample = (type: 'yelp' | 'amazon' | 'goodreads') => {
     const samples = {
@@ -53,6 +54,7 @@ export default function App() {
       goodreads: "Goodreads Review: [Things Fall Apart] - 5 Stars. A masterpiece that defined our identity.\nGoodreads Review: [Americanah] - 4 Stars. Adichie's commentary on race and hair is top tier."
     };
     setCustomHistory(samples[type]);
+    setSelectedSample(type);
   };
   const [simulation, setSimulation] = useState<any>(null);
   const [isSimulating, setIsSimulating] = useState(false);
@@ -89,6 +91,7 @@ export default function App() {
         setQuery(transcript);
       } else {
         setCustomHistory(prev => prev ? `${prev}\n${transcript}` : transcript);
+        setSelectedSample(null);
       }
     };
 
@@ -229,7 +232,7 @@ export default function App() {
 
               <label className="block">
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-[10px] text-zinc-500 uppercase font-black block">Raw Dataset Feed (Yelp/Amazon/Goodreads)</span>
+                  <span className="text-[10px] text-zinc-500 uppercase font-black block">Feed Gallery (Select One Suggestion)</span>
                   <button 
                     onClick={() => startVoiceInput('history')}
                     className={`p-1 rounded-md transition-all ${isListening ? 'text-red-500 animate-pulse' : 'text-zinc-600 hover:text-white'}`}
@@ -240,26 +243,44 @@ export default function App() {
                 </div>
                 <textarea 
                   className="w-full h-24 bg-black border border-white/10 rounded-2xl p-4 text-xs font-mono focus:ring-1 focus:ring-green-500 outline-none resize-none leading-relaxed"
-                  placeholder="Paste or load reviews to model your persona..."
+                  placeholder="Select a suggestion from the gallery or paste reviews..."
                   value={customHistory}
-                  onChange={(e) => setCustomHistory(e.target.value)}
+                  onChange={(e) => {
+                    setCustomHistory(e.target.value);
+                    setSelectedSample(null);
+                  }}
                 />
               </label>
 
               <div className="flex flex-wrap gap-2">
-                <button onClick={() => loadSample('yelp')} className="px-3 py-1.5 bg-zinc-900 border border-white/5 rounded-lg text-[9px] font-black text-zinc-500 hover:text-green-500 transition-colors uppercase tracking-widest">Load Yelp</button>
-                <button onClick={() => loadSample('amazon')} className="px-3 py-1.5 bg-zinc-900 border border-white/5 rounded-lg text-[9px] font-black text-zinc-500 hover:text-blue-500 transition-colors uppercase tracking-widest">Load Amazon</button>
-                <button onClick={() => loadSample('goodreads')} className="px-3 py-1.5 bg-zinc-900 border border-white/5 rounded-lg text-[9px] font-black text-zinc-500 hover:text-yellow-500 transition-colors uppercase tracking-widest">Load Goodreads</button>
+                <button 
+                  onClick={() => loadSample('yelp')} 
+                  className={`px-3 py-1.5 border rounded-lg text-[9px] font-black transition-all uppercase tracking-widest ${selectedSample === 'yelp' ? 'bg-green-600/20 border-green-500 text-green-500' : 'bg-zinc-900 border-white/5 text-zinc-500 hover:text-green-500'}`}
+                >
+                  Yelp Suggestion
+                </button>
+                <button 
+                  onClick={() => loadSample('amazon')} 
+                  className={`px-3 py-1.5 border rounded-lg text-[9px] font-black transition-all uppercase tracking-widest ${selectedSample === 'amazon' ? 'bg-blue-600/20 border-blue-500 text-blue-500' : 'bg-zinc-900 border-white/5 text-zinc-500 hover:text-blue-500'}`}
+                >
+                  Amazon Suggestion
+                </button>
+                <button 
+                  onClick={() => loadSample('goodreads')} 
+                  className={`px-3 py-1.5 border rounded-lg text-[9px] font-black transition-all uppercase tracking-widest ${selectedSample === 'goodreads' ? 'bg-yellow-600/20 border-yellow-500 text-yellow-500' : 'bg-zinc-900 border-white/5 text-zinc-500 hover:text-yellow-500'}`}
+                >
+                  Goodreads Suggestion
+                </button>
               </div>
             </div>
 
             <button 
               onClick={extractPersona}
-              disabled={isExtracting}
+              disabled={isExtracting || (!customHistory && !selectedUser.history)}
               className="w-full mt-6 bg-green-600 hover:bg-green-500 disabled:bg-zinc-800 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 transition-all"
             >
               {isExtracting ? <Loader2 className="animate-spin w-4 h-4" /> : <BrainCircuit className="w-4 h-4" />}
-              Extract Persona
+              Generate Digital Twin
             </button>
           </section>
 
