@@ -14,7 +14,6 @@ COPY --from=builder /app/package*.json ./
 RUN npm install --omit=dev
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/server.ts ./
-COPY --from=builder /app/node_modules/tsx ./node_modules/tsx
 
 EXPOSE 3000
-CMD ["npx", "tsx", "server.ts"]
+CMD ["npm", "start"]
