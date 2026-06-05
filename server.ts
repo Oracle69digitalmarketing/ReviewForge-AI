@@ -96,24 +96,31 @@ async function startServer() {
   app.post('/task_a/simulate', async (req, res) => {
     try {
       checkAI();
-      const { user_name, item_id, history } = req.body;
+      const { user_name, item_id, history, persona: providedPersona } = req.body;
 
-      // 1. Extraction step
-      const extractionPrompt = `
-        User Name: ${user_name}
-        Analyze this user history: ${JSON.stringify(history)}. 
-        Capture rating tendencies, linguistic style (including pidgin usage), sentiment patterns, and contextual triggers.
-        Focus on Nigerian nuances.
-        Output exactly in this JSON format: ${JSON.stringify(PERSONA_SCHEMA)}
-      `;
-      const personaText = await getLLMResponse(extractionPrompt, true);
-      let persona;
-      try {
-        const jsonMatch = personaText.match(/\{.*\}/s);
-        persona = JSON.parse(jsonMatch ? jsonMatch[0] : personaText);
-      } catch (reason) {
-        console.error('Failed to parse persona JSON:', personaText);
-        throw new Error('Invalid persona extraction', { cause: reason });
+      let persona = providedPersona;
+      if (!persona) {
+        // 1. Extraction step
+        const extractionPrompt = `
+          User Name: ${user_name}
+          Analyze this user history: ${JSON.stringify(history)}. 
+          Capture rating tendencies, linguistic style (including pidgin usage), sentiment patterns, and contextual triggers.
+          Focus on Nigerian nuances.
+          Output exactly in this JSON format: ${JSON.stringify(PERSONA_SCHEMA)}
+        `;
+        const personaText = await getLLMResponse(extractionPrompt, true);
+        try {
+          const jsonMatch = personaText.match(/([{\[].*[}\]])/s);
+          persona = JSON.parse(jsonMatch ? jsonMatch[0] : personaText);
+        } catch (reason) {
+          console.error('Failed to parse persona JSON:', personaText);
+          throw new Error('Invalid persona extraction', { cause: reason });
+        }
+      }
+
+      // If persona was extracted as an array, pick the first one for simulation if not otherwise specified
+      if (Array.isArray(persona)) {
+        persona = persona[0];
       }
 
       // 2. Generation step with Chain-of-Thought
@@ -133,7 +140,7 @@ async function startServer() {
       `;
       
       const text = await getLLMResponse(genPrompt, true);
-      const jsonMatch = text.match(/\{.*\}/s);
+      const jsonMatch = text.match(/([{\[].*[}\]])/s);
       if (jsonMatch) {
          res.json(JSON.parse(jsonMatch[0]));
       } else {
@@ -171,7 +178,7 @@ async function startServer() {
       `;
 
       const text = await getLLMResponse(extractionPrompt, true);
-      const jsonMatch = text.match(/\{.*\}/s);
+      const jsonMatch = text.match(/([{\[].*[}\]])/s);
       let data = { ranked_items: [], updated_state: "", reasoning: "" };
       
       if (jsonMatch) {
@@ -209,7 +216,7 @@ async function startServer() {
       checkAI();
       const { history } = req.body;
       const text = await getLLMResponse(`Extract persona and output ONLY JSON: ${JSON.stringify(history)}. Format: ${JSON.stringify(PERSONA_SCHEMA)}`, true);
-      const jsonMatch = text.match(/\{.*\}/s);
+      const jsonMatch = text.match(/([{\[].*[}\]])/s);
       if (jsonMatch) {
         res.json(JSON.parse(jsonMatch[0]));
       } else {

@@ -43,6 +43,7 @@ export default function App() {
   const [userName, setUserName] = useState('New User');
   const [customHistory, setCustomHistory] = useState('');
   const [persona, setPersona] = useState<any>(null);
+  const [personaOptions, setPersonaOptions] = useState<any[] | null>(null);
   const [isExtracting, setIsExtracting] = useState(false);
 
   const loadSample = (type: 'yelp' | 'amazon' | 'goodreads') => {
@@ -108,7 +109,13 @@ export default function App() {
         body: JSON.stringify({ history: historyToProcess })
       });
       const data = await res.json();
-      setPersona(data);
+      if (Array.isArray(data)) {
+        setPersonaOptions(data);
+        setPersona(data[0]);
+      } else {
+        setPersona(data);
+        setPersonaOptions(null);
+      }
       setActiveTab('modeling');
     } catch (e) {
       console.error(e);
@@ -127,7 +134,8 @@ export default function App() {
         body: JSON.stringify({ 
           user_name: userName, 
           item_id: simTarget.id,
-          history: historyToProcess
+          history: historyToProcess,
+          persona: persona
         })
       });
       const data = await res.json();
@@ -266,6 +274,23 @@ export default function App() {
                   <Heart size={16} />
                   <h3 className="font-black text-sm uppercase tracking-widest">Linguistic Fingerprint</h3>
                 </div>
+
+                {personaOptions && (
+                  <div className="mb-4 space-y-2">
+                    <span className="text-[10px] text-zinc-500 uppercase font-black block">Switch Persona Profile</span>
+                    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                      {personaOptions.map((p, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => setPersona(p)}
+                          className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all whitespace-nowrap ${persona === p ? 'bg-green-600 text-white' : 'bg-white/5 text-zinc-500 hover:text-white'}`}
+                        >
+                          {p.user_id || `Profile ${idx + 1}`}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 
                 <div className="space-y-4">
                   <div className="bg-black/40 p-4 rounded-2xl border border-white/5">
